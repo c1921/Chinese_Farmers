@@ -1,0 +1,16 @@
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+
+# Ignore Python virtual environment directories
+.venv/
+.env/
+.conda/
+
+# Ignore other system or environment files
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+.DS_Store
+Thumbs.db
