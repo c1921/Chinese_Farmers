@@ -11,6 +11,7 @@ class MainWindow(QWidget):
 
         # 创建家庭
         self.families = [Family() for _ in range(5)]
+        self.characters_dict = {member.id: member for family in self.families for member in family.members}
 
         # 设置窗口
         self.setWindowTitle('Random Families Game')
@@ -61,10 +62,24 @@ class MainWindow(QWidget):
         main_layout.addLayout(top_layout)
 
         # 左侧角色详细信息显示
+        self.detail_widget = QWidget()
+        self.detail_layout = QVBoxLayout(self.detail_widget)
         self.detail_label = QLabel()
         self.detail_label.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.detail_label.setFont(font)
-        self.detail_label.setFixedWidth(300)
+        self.detail_layout.addWidget(self.detail_label)
+
+        self.relation_label = QLabel("Relationships:")
+        self.relation_label.setFont(font)
+        self.detail_layout.addWidget(self.relation_label)
+
+        self.relations_layout = QVBoxLayout()
+        self.detail_layout.addLayout(self.relations_layout)
+
+        detail_scroll_area = QScrollArea()
+        detail_scroll_area.setWidgetResizable(True)
+        detail_scroll_area.setWidget(self.detail_widget)
+        detail_scroll_area.setFixedWidth(300)
 
         # 创建家庭显示区
         self.family_display_widget = QWidget()
@@ -75,9 +90,9 @@ class MainWindow(QWidget):
         self.update_family_display()
 
         # 创建滚动区域
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setWidget(self.family_display_widget)
+        family_scroll_area = QScrollArea()
+        family_scroll_area.setWidgetResizable(True)
+        family_scroll_area.setWidget(self.family_display_widget)
 
         # 日志显示区
         self.log_text_edit = QTextEdit()
@@ -86,8 +101,8 @@ class MainWindow(QWidget):
 
         # 设置整体布局
         content_layout = QHBoxLayout()
-        content_layout.addWidget(self.detail_label)
-        content_layout.addWidget(scroll_area)
+        content_layout.addWidget(detail_scroll_area)
+        content_layout.addWidget(family_scroll_area)
         
         main_layout.addLayout(content_layout)
         main_layout.addWidget(self.log_text_edit)
@@ -116,6 +131,13 @@ class MainWindow(QWidget):
     
     def display_character_details(self, character):
         self.selected_character = character
+        siblings = character.get_siblings(self.characters_dict)
+        sibling_names = [sibling.name for sibling in siblings]
+
+        father = character.get_father(self.characters_dict)
+        mother = character.get_mother(self.characters_dict)
+        children = character.get_children(self.characters_dict)
+
         details = (
             f"Name: {character.name}\n"
             f"Gender: {character.gender}\n"
@@ -123,9 +145,37 @@ class MainWindow(QWidget):
             f"Trait: {character.trait}\n"
             f"Player: {character.is_player}\n"
             f"Birthday: {character.birth_date.strftime('%Y-%m-%d')}\n"
-            f"Fertility: {character.fertility:.2f}"
+            f"Fertility: {character.fertility:.2f}\n"
         )
         self.detail_label.setText(details)
+
+        # 更新人物关系显示
+        self.clear_layout(self.relations_layout)
+        
+        father_label = QLabel(f"Father: {father.name if father else 'Unknown'}")
+        mother_label = QLabel(f"Mother: {mother.name if mother else 'Unknown'}")
+        self.relations_layout.addWidget(father_label)
+        self.relations_layout.addWidget(mother_label)
+
+        if children:
+            children_label = QLabel("Children:")
+            self.relations_layout.addWidget(children_label)
+            for child in children:
+                child_label = QLabel(f"  {child.name}")
+                self.relations_layout.addWidget(child_label)
+
+        if sibling_names:
+            siblings_label = QLabel("Siblings:")
+            self.relations_layout.addWidget(siblings_label)
+            for sibling_name in sibling_names:
+                sibling_label = QLabel(f"  {sibling_name}")
+                self.relations_layout.addWidget(sibling_label)
+
+    def clear_layout(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
 
     def advance_one_day(self):
         self.current_date += timedelta(days=1)
@@ -133,8 +183,8 @@ class MainWindow(QWidget):
 
         log_messages = []
         for family in self.families:
-            log_messages.extend(family.age_one_day(self.current_date))
-            pregnancy_message = family.try_for_baby(self.current_date)
+            log_messages.extend(family.age_one_day(self.current_date, self.characters_dict))
+            pregnancy_message = family.try_for_baby(self.current_date, self.characters_dict)
             if pregnancy_message:
                 log_messages.append(pregnancy_message)
 
