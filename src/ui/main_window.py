@@ -1,5 +1,6 @@
+import random
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QPalette, QColor
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea, QHBoxLayout, QGroupBox, QPushButton, QButtonGroup, QTextEdit
 from datetime import datetime, timedelta
 
@@ -128,6 +129,7 @@ class MainWindow(QWidget):
 
         # 当前选中的角色
         self.selected_character = None
+        self.selected_character_label = None
     
     def display_character_details(self, character):
         self.selected_character = character
@@ -146,30 +148,67 @@ class MainWindow(QWidget):
             f"Player: {character.is_player}\n"
             f"Birthday: {character.birth_date.strftime('%Y-%m-%d')}\n"
             f"Fertility: {character.fertility:.2f}\n"
+            f"Married: {'Yes' if character.married else 'No'}\n"
         )
         self.detail_label.setText(details)
 
         # 更新人物关系显示
         self.clear_layout(self.relations_layout)
         
-        father_label = QLabel(f"Father: {father.name if father else 'Unknown'}")
-        mother_label = QLabel(f"Mother: {mother.name if mother else 'Unknown'}")
-        self.relations_layout.addWidget(father_label)
-        self.relations_layout.addWidget(mother_label)
+        if father or mother:
+            parents_text = "Parents: "
+            if father:
+                parents_text += father.name
+            if mother:
+                parents_text += f" and {mother.name}" if father else mother.name
+            parents_label = QLabel(parents_text)
+            self.set_label_clickable(parents_label, father)
+            self.set_label_clickable(parents_label, mother)
+            self.relations_layout.addWidget(parents_label)
 
         if children:
             children_label = QLabel("Children:")
             self.relations_layout.addWidget(children_label)
             for child in children:
                 child_label = QLabel(f"  {child.name}")
+                self.set_label_clickable(child_label, child)
                 self.relations_layout.addWidget(child_label)
 
         if sibling_names:
             siblings_label = QLabel("Siblings:")
             self.relations_layout.addWidget(siblings_label)
-            for sibling_name in sibling_names:
-                sibling_label = QLabel(f"  {sibling_name}")
+            for sibling in siblings:
+                sibling_label = QLabel(f"  {sibling.name}")
+                self.set_label_clickable(sibling_label, sibling)
                 self.relations_layout.addWidget(sibling_label)
+
+        if character.partner_id:
+            partner = self.characters_dict.get(character.partner_id)
+            if partner:
+                partner_label = QLabel(f"Spouse: {partner.name}")
+                self.set_label_clickable(partner_label, partner)
+                self.relations_layout.addWidget(partner_label)
+
+        self.highlight_selected_character()
+
+    def highlight_selected_character(self):
+        if self.selected_character_label:
+            if self.selected_character_label in self.family_display_widget.findChildren(QLabel):
+                self.selected_character_label.setStyleSheet("")
+            self.selected_character_label = None
+        if self.selected_character:
+            for family in self.families:
+                for member in family.members:
+                    if member == self.selected_character:
+                        for i in range(self.family_display_layout.count()):
+                            family_box = self.family_display_layout.itemAt(i).widget()
+                            if family_box.title().endswith(family.name):
+                                for j in range(family_box.layout().count()):
+                                    label = family_box.layout().itemAt(j).widget()
+                                    if label.text().startswith(member.name):
+                                        label.setStyleSheet("background-color: yellow;")
+                                        self.selected_character_label = label
+                                        return
 
     def clear_layout(self, layout):
         while layout.count():
@@ -187,10 +226,34 @@ class MainWindow(QWidget):
             pregnancy_message = family.try_for_baby(self.current_date, self.characters_dict)
             if pregnancy_message:
                 log_messages.append(pregnancy_message)
+        
+        # 进行婚姻匹配
+        log_messages.extend(self.match_marriages())
 
         self.update_family_display()
         self.update_selected_character_details()
         self.update_log_display(log_messages)
+
+    def match_marriages(self):
+        log_messages = []
+        unmarried_males = [char for char in self.characters_dict.values() if char.gender == 'Male' and not char.married and char.age >= 16]
+        unmarried_females = [char for char in self.characters_dict.values() if char.gender == 'Female' and not char.married and char.age >= 16]
+
+        for male in unmarried_males:
+            if unmarried_females:
+                female = random.choice(unmarried_females)
+                if male.marry(female):
+                    log_messages.append(f"{self.current_date.strftime('%Y-%m-%d')}: {male.name} married {female.name}.")
+                    unmarried_females.remove(female)
+
+                    # 将女性角色从原有家庭分组移到男性角色的家庭分组
+                    for family in self.families:
+                        if female in family.members:
+                            family.remove_member(female)
+                    male_family = next(fam for fam in self.families if male in fam.members)
+                    male_family.add_member(female)
+        
+        return log_messages
 
     def update_date_display(self):
         self.date_label.setText(self.current_date.strftime('%Y-%m-%d'))
@@ -234,3 +297,9 @@ class MainWindow(QWidget):
             self.timer.stop()
             self.pause_button.setText("Resume")
         self.paused = not self.paused
+
+    def set_label_clickable(self, label, character):
+        if character:
+            label.mousePressEvent = lambda event, char=character: self.display_character_details(char)
+            label.setCursor(Qt.CursorShape.PointingHandCursor)
+            label.setStyleSheet("color: blue; text-decoration: underline;")

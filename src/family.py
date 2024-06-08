@@ -6,6 +6,8 @@ class Family:
         self.wife = Character(is_player=False, gender='female', age_range=(self.head.age - 5, self.head.age + 5), surname=self.head.name.split()[-1])
         self.head.partner_id = self.wife.id
         self.wife.partner_id = self.head.id
+        self.head.married = True
+        self.wife.married = True
         self.name = self.head.name.split()[-1]  # 使用姓氏作为家庭名
         self.members = [self.head, self.wife]
 
@@ -28,3 +30,9 @@ class Family:
         if log_message:
             return log_message
         return None
+
+    def add_member(self, member):
+        self.members.append(member)
+
+    def remove_member(self, member):
+        self.members.remove(member)

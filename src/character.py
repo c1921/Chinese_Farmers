@@ -18,7 +18,7 @@ class Character:
             self.name = f"{names.get_first_name(gender=gender)} {surname}"
         self.gender = 'Male' if gender == 'male' else 'Female'
         if age_range is None:
-            self.age = random.randint(18, 60)
+            self.age = random.randint(18, 25)
         else:
             self.age = random.randint(*age_range)
         self.trait = random.choice(traits)
@@ -31,6 +31,7 @@ class Character:
         self.mother_id = mother_id
         self.children_ids = []
         self.partner_id = None  # 配偶角色ID
+        self.married = False  # 婚姻状态
         
         if birth_date is None:
             current_year = datetime.now().year  # 使用当前年份
@@ -43,7 +44,7 @@ class Character:
         self.update_fertility()
 
     def __str__(self):
-        return f"Name: {self.name}, Gender: {self.gender}, Age: {self.age}, Trait: {self.trait}, Player: {self.is_player}, Birthday: {self.birth_date.strftime('%Y-%m-%d')}"
+        return f"Name: {self.name}, Gender: {self.gender}, Age: {self.age}, Trait: {self.trait}, Player: {self.is_player}, Married: {self.married}, Birthday: {self.birth_date.strftime('%Y-%m-%d')}"
 
     def update_fertility(self):
         # 更新生育能力
@@ -76,7 +77,7 @@ class Character:
 
     def get_pregnant(self, partner, current_date):
         if (not self.pregnant and self.gender == 'Female' and 16 <= self.age < 40 and self.postpartum_days >= 90):
-            pregnancy_chance = (self.fertility + partner.fertility) * 0.005  # 怀孕概率
+            pregnancy_chance = (self.fertility + partner.fertility) * 0.0025  # 怀孕概率
             if random.random() < pregnancy_chance:
                 self.pregnant = True
                 self.partner_id = partner.id  # 记录配偶角色ID
@@ -102,11 +103,20 @@ class Character:
         return [characters_dict[child_id] for child_id in self.children_ids]
 
     def get_siblings(self, characters_dict):
-        siblings = []
+        siblings = set()
         if self.father_id:
             father = characters_dict[self.father_id]
-            siblings.extend(child for child in father.get_children(characters_dict) if child.id != self.id)
+            siblings.update(child for child in father.get_children(characters_dict) if child.id != self.id)
         if self.mother_id:
             mother = characters_dict[self.mother_id]
-            siblings.extend(child for child in mother.get_children(characters_dict) if child.id != self.id)
-        return siblings
+            siblings.update(child for child in mother.get_children(characters_dict) if child.id != self.id)
+        return list(siblings)
+
+    def marry(self, partner):
+        if not self.married and not partner.married and self.gender != partner.gender and self.age >= 16 and partner.age >= 16:
+            self.married = True
+            self.partner_id = partner.id
+            partner.married = True
+            partner.partner_id = self.id
+            return True
+        return False
