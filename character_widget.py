@@ -1,7 +1,7 @@
 import random
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton
 from PyQt6.QtCore import QTimer
-from character import generate_random_character, generate_child_character
+from character import generate_random_character, generate_child_character, Family
 from time_control import TimeControl
 
 class CharacterWidget(QWidget):
@@ -106,6 +106,13 @@ class CharacterWidget(QWidget):
                         if random.random() < 0.5:  # 50%的概率同意婚姻申请
                             character.spouse = chosen_spouse
                             chosen_spouse.spouse = character
+                            # 更新家庭关系
+                            if character.gender == "Female":
+                                character.family = chosen_spouse.family
+                                character.family.add_member(character)
+                            else:
+                                chosen_spouse.family = character.family
+                                chosen_spouse.family.add_member(chosen_spouse)
 
     def handle_pregnancy(self):
         """

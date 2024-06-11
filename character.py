@@ -1,11 +1,32 @@
 import random
 import uuid
 
+class Family:
+    """
+    表示一个家庭的类，包含唯一ID和家庭成员列表。
+    """
+    def __init__(self):
+        self.id = str(uuid.uuid4())  # 生成唯一ID
+        self.members = []  # 初始化家庭成员列表
+
+    def add_member(self, member):
+        """
+        添加家庭成员。
+        
+        参数：
+        member (Character): 需要添加的家庭成员。
+        """
+        self.members.append(member)
+
+    def __str__(self):
+        member_names = ", ".join(member.name for member in self.members)
+        return f"Family ID: {self.id}\nMembers: {member_names}"
+
 class Character:
     """
     表示一个角色的类，包含唯一ID、姓名、性别、年龄、能力值、配偶和怀孕天数。
     """
-    def __init__(self, name, gender, age, abilities):
+    def __init__(self, name, gender, age, abilities, family=None):
         self.id = str(uuid.uuid4())  # 生成唯一ID
         self.name = name  # 设置角色姓名
         self.gender = gender  # 设置角色性别
@@ -13,11 +34,12 @@ class Character:
         self.abilities = abilities  # 设置角色能力值
         self.spouse = None  # 初始化配偶为None
         self.pregnancy_days = 0  # 初始化怀孕天数为0
-        self.family_id = str(uuid.uuid4())  # 初始化家庭ID
+        self.family = family if family else Family()  # 如果没有传入家庭则创建一个新家庭
+        self.family.add_member(self)  # 将角色添加到家庭
 
     def __str__(self):
         spouse_name = self.spouse.name if self.spouse else "无"  # 获取配偶姓名
-        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\n"  # 返回角色的字符串表示
+        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\nFamily ID: {self.family.id}"  # 返回角色的字符串表示
 
 def generate_random_character():
     """
@@ -59,4 +81,5 @@ def generate_child_character(father, mother):
         "dexterity": (father.abilities["dexterity"] + mother.abilities["dexterity"]) // 2,  # 计算灵巧值的平均数
         "charisma": (father.abilities["charisma"] + mother.abilities["charisma"]) // 2  # 计算魅力值的平均数
     }
-    return Character(name, gender, age, abilities)  # 返回生成的子角色对象
+    family = mother.family  # 子角色加入母亲的家庭
+    return Character(name, gender, age, abilities, family)  # 返回生成的子角色对象
