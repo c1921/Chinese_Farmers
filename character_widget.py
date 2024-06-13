@@ -1,7 +1,7 @@
 import random
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton
-from PyQt6.QtCore import QTimer
-from character import generate_random_character, generate_child_character, Family
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton
+from PyQt6.QtCore import QTimer, Qt
+from character import generate_random_character, generate_child_character, Character
 from time_control import TimeControl
 
 class CharacterWidget(QWidget):
@@ -39,14 +39,12 @@ class CharacterWidget(QWidget):
         left_layout.addWidget(self.spouse_button)  # 将按钮添加到左侧布局
 
         # 右侧角色列表
-        self.character_list = QListWidget()  # 创建角色列表部件
+        self.character_list = QTreeWidget()  # 创建角色树部件
+        self.character_list.setHeaderLabel("家庭和角色")  # 设置表头标签
         self.character_list.itemClicked.connect(self.display_character_details)  # 连接点击信号
         content_layout.addWidget(self.character_list)  # 将角色列表添加到内容布局
 
-        for character in characters:
-            item = QListWidgetItem(character.name)  # 创建列表项
-            item.setData(1, character)  # 将角色对象存储在列表项的数据中
-            self.character_list.addItem(item)  # 将列表项添加到角色列表
+        self.populate_character_list()
 
         self.setWindowTitle("随机角色")  # 设置窗口标题
 
@@ -57,19 +55,36 @@ class CharacterWidget(QWidget):
 
         self.current_character = None  # 当前选中的角色
 
+    def populate_character_list(self):
+        """
+        将角色按家庭分组显示在角色树中。
+        """
+        self.character_list.clear()  # 清空角色树
+        families = {}
+        for character in self.characters:
+            if character.family.id not in families:
+                families[character.family.id] = QTreeWidgetItem(self.character_list)
+                families[character.family.id].setText(0, f"Family {character.family.id[:6]}")  # 设置家庭名称
+                families[character.family.id].setExpanded(True)  # 默认展开家庭节点
+            character_item = QTreeWidgetItem(families[character.family.id])
+            character_item.setText(0, f"{character.name} (Gender: {character.gender}, Age: {character.age})")
+            character_item.setData(0, 1, character)
+
     def display_character_details(self, item):
         """
         显示选中的角色的详细信息。
         
         参数：
-        item (QListWidgetItem): 被选中的列表项。
+        item (QTreeWidgetItem): 被选中的树节点项。
         """
-        self.current_character = item.data(1)  # 获取选中的角色对象
-        self.detail_label.setText(str(self.current_character))  # 显示角色详细信息
-        if self.current_character.spouse:  # 如果角色有配偶
-            self.spouse_button.setEnabled(True)  # 启用跳转配偶按钮
-        else:
-            self.spouse_button.setEnabled(False)  # 禁用跳转配偶按钮
+        character = item.data(0, 1)  # 获取选中的角色对象
+        if isinstance(character, Character):
+            self.current_character = character  # 更新当前选中的角色
+            self.detail_label.setText(str(self.current_character))  # 显示角色详细信息
+            if self.current_character.spouse:  # 如果角色有配偶
+                self.spouse_button.setEnabled(True)  # 启用跳转配偶按钮
+            else:
+                self.spouse_button.setEnabled(False)  # 禁用跳转配偶按钮
 
     def jump_to_spouse(self):
         """
@@ -77,12 +92,11 @@ class CharacterWidget(QWidget):
         """
         if self.current_character and self.current_character.spouse:
             spouse = self.current_character.spouse  # 获取配偶对象
-            for i in range(self.character_list.count()):
-                item = self.character_list.item(i)
-                if item.data(1) == spouse:
-                    self.character_list.setCurrentItem(item)  # 设置配偶为当前选中项
-                    self.display_character_details(item)  # 显示配偶的详细信息
-                    break
+            # 在角色树中找到配偶节点并选中
+            items = self.character_list.findItems(spouse.name, Qt.MatchRecursive)
+            if items:
+                self.character_list.setCurrentItem(items[0])
+                self.display_character_details(items[0])
 
     def update_time(self):
         """
@@ -113,6 +127,7 @@ class CharacterWidget(QWidget):
                             else:
                                 chosen_spouse.family = character.family
                                 chosen_spouse.family.add_member(chosen_spouse)
+        self.populate_character_list()
 
     def handle_pregnancy(self):
         """
@@ -131,9 +146,7 @@ class CharacterWidget(QWidget):
 
         for new_character in new_characters:
             self.characters.append(new_character)
-            item = QListWidgetItem(new_character.name)
-            item.setData(1, new_character)
-            self.character_list.addItem(item)
+        self.populate_character_list()
 
     def set_timer_interval(self, interval):
         """
