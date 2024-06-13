@@ -50,6 +50,7 @@ class Character:
         self.birth_date = birth_date  # 设置角色的生日
         self.health = INITIAL_HEALTH  # 初始化健康值
         self.dying_days_left = None  # 初始化濒死天数为None
+        self.children = []  # 初始化子女列表
 
     def __str__(self):
         spouse_name = self.spouse.name if self.spouse else "无"  # 获取配偶姓名
@@ -104,7 +105,13 @@ def generate_child_character(father, mother, current_date):
     family = mother.family  # 子角色加入母亲的家庭
     generation = father.generation + 1  # 子角色的世代比父亲的世代多1
     mother.last_birth_date = current_date  # 更新母亲的最近一次生产日期
-    return Character(name, gender, age, abilities, current_date, generation, family)  # 返回生成的子角色对象
+    child = Character(name, gender, age, abilities, current_date, generation, family)  # 返回生成的子角色对象
+    
+    # 将子女添加到父母的子女列表中
+    father.children.append(child)
+    mother.children.append(child)
+    
+    return child
 
 def update_health(character):
     """
