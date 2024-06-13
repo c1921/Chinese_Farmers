@@ -47,7 +47,7 @@ class TimeControl:
         self.slow_button.clicked.connect(lambda: self.main_window.set_timer_interval(1000))
         self.medium_button.clicked.connect(lambda: self.main_window.set_timer_interval(500))
         self.fast_button.clicked.connect(lambda: self.main_window.set_timer_interval(100))
-        self.very_fast_button.clicked.connect(lambda: self.main_window.set_timer_interval(10))
+        self.very_fast_button.clicked.connect(lambda: self.main_window.set_timer_interval(1))
         self.pause_button.clicked.connect(self.main_window.toggle_timer)
 
     def update_date_label(self, date):

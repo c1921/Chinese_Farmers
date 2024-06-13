@@ -1,6 +1,7 @@
 import random
 from datetime import datetime, timedelta
 from id_generator import UniqueIDGenerator
+import names
 
 character_id_generator = UniqueIDGenerator()
 family_id_generator = UniqueIDGenerator()
@@ -40,13 +41,14 @@ class Character:
         self.abilities = abilities  # 设置角色能力值
         self.spouse = None  # 初始化配偶为None
         self.pregnancy_days = 0  # 初始化怀孕天数为0
+        self.last_birth_date = None  # 初始化最近一次生产日期为None
         self.family = family if family else Family()  # 如果没有传入家庭则创建一个新家庭
         self.family.add_member(self)  # 将角色添加到家庭
         self.birth_date = birth_date  # 设置角色的生日
 
     def __str__(self):
         spouse_name = self.spouse.name if self.spouse else "无"  # 获取配偶姓名
-        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\nFamily ID: {self.family.id}\nBirth Date: {self.birth_date.strftime('%Y-%m-%d')}"  # 返回角色的字符串表示
+        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\nLast Birth Date: {self.last_birth_date}\nFamily ID: {self.family.id}\nBirth Date: {self.birth_date.strftime('%Y-%m-%d')}"  # 返回角色的字符串表示
 
 def generate_random_character():
     """
@@ -55,10 +57,10 @@ def generate_random_character():
     返回：
     Character: 一个随机生成的角色对象。
     """
-    names = ["Alice", "Bob", "Charlie", "Diana", "Eve"]  # 预定义姓名列表
-    genders = ["Male", "Female"]  # 预定义性别列表
-    name = random.choice(names)  # 随机选择姓名
-    gender = random.choice(genders)  # 随机选择性别
+    gender = random.choice(["Male", "Female"])  # 随机选择性别
+    first_name = names.get_first_name(gender.lower())  # 根据性别生成名字
+    last_name = names.get_last_name()  # 生成姓氏
+    name = f"{last_name} {first_name}"  # 合并姓名，姓在前，名在后
     age = random.randint(18, 60)  # 随机生成年龄
     birth_date = GAME_START_DATE - timedelta(days=age*365 + random.randint(0, 364))  # 随机生成出生日期
     abilities = {
@@ -81,8 +83,10 @@ def generate_child_character(father, mother, current_date):
     返回：
     Character: 一个子角色对象。
     """
-    name = f"{father.name} Jr."  # 生成子角色的姓名
     gender = random.choice(["Male", "Female"])  # 随机生成性别
+    first_name = names.get_first_name(gender.lower())  # 根据性别生成名字
+    last_name = father.name.split()[0]  # 使用父亲的姓氏
+    name = f"{last_name} {first_name}"  # 生成子角色的姓名，姓在前，名在后
     age = 0  # 子角色的年龄为0
     abilities = {
         "strength": (father.abilities["strength"] + mother.abilities["strength"]) // 2,  # 计算力量值的平均数
@@ -91,4 +95,5 @@ def generate_child_character(father, mother, current_date):
         "charisma": (father.abilities["charisma"] + mother.abilities["charisma"]) // 2  # 计算魅力值的平均数
     }
     family = mother.family  # 子角色加入母亲的家庭
+    mother.last_birth_date = current_date  # 更新母亲的最近一次生产日期
     return Character(name, gender, age, abilities, current_date, family)  # 返回生成的子角色对象

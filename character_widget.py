@@ -134,9 +134,9 @@ class CharacterWidget(QWidget):
         处理角色之间的婚姻申请。
         """
         for character in self.characters:
-            if character.spouse is None:  # 如果角色没有配偶
+            if character.spouse is None and character.age >= 16:  # 如果角色没有配偶且年龄大于等于16岁
                 if random.random() < 0.05:  # 5%的概率发出婚姻申请
-                    potential_spouses = [c for c in self.characters if c.gender != character.gender and c.spouse is None]
+                    potential_spouses = [c for c in self.characters if c.gender != character.gender and c.spouse is None and c.age >= 16]
                     if potential_spouses:
                         chosen_spouse = random.choice(potential_spouses)
                         if random.random() < 0.5:  # 50%的概率同意婚姻申请
@@ -158,7 +158,7 @@ class CharacterWidget(QWidget):
         new_characters = []
         for character in self.characters:
             if character.spouse and character.gender == "Female" and 16 <= character.age < 40:
-                if character.pregnancy_days == 0 and random.random() < 0.1:  # 10%的概率怀孕
+                if character.pregnancy_days == 0 and (character.last_birth_date is None or (self.current_date - character.last_birth_date).days >= 90) and random.random() < 0.1:  # 10%的概率怀孕，且距离上次生产已过90天
                     character.pregnancy_days = 1
                 elif character.pregnancy_days > 0:
                     character.pregnancy_days += 1
