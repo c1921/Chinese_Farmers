@@ -1,12 +1,18 @@
 import random
-import uuid
+from datetime import datetime, timedelta
+from id_generator import UniqueIDGenerator
+
+character_id_generator = UniqueIDGenerator()
+family_id_generator = UniqueIDGenerator()
+
+GAME_START_DATE = datetime(1840, 1, 1)
 
 class Family:
     """
     表示一个家庭的类，包含唯一ID和家庭成员列表。
     """
     def __init__(self):
-        self.id = str(uuid.uuid4())  # 生成唯一ID
+        self.id = family_id_generator.generate_id()  # 生成唯一ID
         self.members = []  # 初始化家庭成员列表
 
     def add_member(self, member):
@@ -26,8 +32,8 @@ class Character:
     """
     表示一个角色的类，包含唯一ID、姓名、性别、年龄、能力值、配偶和怀孕天数。
     """
-    def __init__(self, name, gender, age, abilities, family=None):
-        self.id = str(uuid.uuid4())  # 生成唯一ID
+    def __init__(self, name, gender, age, abilities, birth_date, family=None):
+        self.id = character_id_generator.generate_id()  # 生成唯一ID
         self.name = name  # 设置角色姓名
         self.gender = gender  # 设置角色性别
         self.age = age  # 设置角色年龄
@@ -36,10 +42,11 @@ class Character:
         self.pregnancy_days = 0  # 初始化怀孕天数为0
         self.family = family if family else Family()  # 如果没有传入家庭则创建一个新家庭
         self.family.add_member(self)  # 将角色添加到家庭
+        self.birth_date = birth_date  # 设置角色的生日
 
     def __str__(self):
         spouse_name = self.spouse.name if self.spouse else "无"  # 获取配偶姓名
-        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\nFamily ID: {self.family.id}"  # 返回角色的字符串表示
+        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\nFamily ID: {self.family.id}\nBirth Date: {self.birth_date.strftime('%Y-%m-%d')}"  # 返回角色的字符串表示
 
 def generate_random_character():
     """
@@ -53,21 +60,23 @@ def generate_random_character():
     name = random.choice(names)  # 随机选择姓名
     gender = random.choice(genders)  # 随机选择性别
     age = random.randint(18, 60)  # 随机生成年龄
+    birth_date = GAME_START_DATE - timedelta(days=age*365 + random.randint(0, 364))  # 随机生成出生日期
     abilities = {
         "strength": random.randint(1, 100),  # 随机生成力量值
         "intelligence": random.randint(1, 100),  # 随机生成智力值
         "dexterity": random.randint(1, 100),  # 随机生成灵巧值
         "charisma": random.randint(1, 100)  # 随机生成魅力值
     }
-    return Character(name, gender, age, abilities)  # 返回生成的角色对象
+    return Character(name, gender, age, abilities, birth_date)  # 返回生成的角色对象
 
-def generate_child_character(father, mother):
+def generate_child_character(father, mother, current_date):
     """
     生成一个子角色。
     
     参数：
     father (Character): 父亲角色。
     mother (Character): 母亲角色。
+    current_date (datetime): 当前日期，用于设置子角色的出生日期。
     
     返回：
     Character: 一个子角色对象。
@@ -82,4 +91,4 @@ def generate_child_character(father, mother):
         "charisma": (father.abilities["charisma"] + mother.abilities["charisma"]) // 2  # 计算魅力值的平均数
     }
     family = mother.family  # 子角色加入母亲的家庭
-    return Character(name, gender, age, abilities, family)  # 返回生成的子角色对象
+    return Character(name, gender, age, abilities, current_date, family)  # 返回生成的子角色对象

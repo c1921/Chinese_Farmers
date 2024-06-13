@@ -50,14 +50,14 @@ class TimeControl:
         self.very_fast_button.clicked.connect(lambda: self.main_window.set_timer_interval(10))
         self.pause_button.clicked.connect(self.main_window.toggle_timer)
 
-    def update_date_label(self, days):
+    def update_date_label(self, date):
         """
-        更新日期标签显示当前天数。
+        更新日期标签显示当前日期。
         
         参数：
-        days (int): 当前天数。
+        date (datetime): 当前日期。
         """
-        self.date_label.setText(f"当前天数: {days}")
+        self.date_label.setText(f"当前日期: {date.strftime('%Y-%m-%d')}")
 
     def update_pause_button(self, is_paused):
         """

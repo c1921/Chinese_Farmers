@@ -1,15 +1,16 @@
 import random
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton
 from PyQt6.QtCore import QTimer, Qt
-from character import generate_random_character, generate_child_character, Character
+from datetime import datetime, timedelta
+from character import generate_random_character, generate_child_character, Character, GAME_START_DATE
 from time_control import TimeControl
 
 class CharacterWidget(QWidget):
     def __init__(self, characters):
         super().__init__()
         self.characters = characters  # 存储角色列表
-        self.days = 0  # 初始化天数
-        self.timer_interval = 10  # 初始化时间间隔
+        self.current_date = GAME_START_DATE  # 初始化当前日期为1840-01-01
+        self.timer_interval = 1000  # 初始化时间间隔为1000毫秒
         self.timer_paused = False  # 初始化定时器暂停状态
 
         # 设置布局
@@ -45,6 +46,7 @@ class CharacterWidget(QWidget):
         content_layout.addWidget(self.character_list)  # 将角色列表添加到内容布局
 
         self.populate_character_list()
+        self.time_control.update_date_label(self.current_date)  # 初始化时显示当前日期
 
         self.setWindowTitle("随机角色")  # 设置窗口标题
 
@@ -64,10 +66,11 @@ class CharacterWidget(QWidget):
         for character in self.characters:
             if character.family.id not in families:
                 families[character.family.id] = QTreeWidgetItem(self.character_list)
-                families[character.family.id].setText(0, f"Family {character.family.id[:6]}")  # 设置家庭名称
+                families[character.family.id].setText(0, f"Family {character.family.id}")  # 设置家庭名称
                 families[character.family.id].setExpanded(True)  # 默认展开家庭节点
             character_item = QTreeWidgetItem(families[character.family.id])
-            character_item.setText(0, f"{character.name} (Gender: {character.gender}, Age: {character.age})")
+            gender_symbol = "♂" if character.gender == "Male" else "♀"
+            character_item.setText(0, f"{character.name} ( {gender_symbol} {character.age} )")
             character_item.setData(0, 1, character)
 
     def display_character_details(self, item):
@@ -100,12 +103,31 @@ class CharacterWidget(QWidget):
 
     def update_time(self):
         """
-        更新当前天数并处理角色的婚姻申请和生育。
+        更新当前日期并处理角色的婚姻申请和生育。
         """
-        self.days += 1  # 天数加1
-        self.time_control.update_date_label(self.days)  # 更新日期标签
+        self.current_date += timedelta(days=1)  # 日期加1天
+        self.time_control.update_date_label(self.current_date)  # 更新日期标签
+        self.update_characters_age()  # 更新角色年龄
         self.handle_marriage_proposals()  # 处理角色的婚姻申请
         self.handle_pregnancy()  # 处理角色的怀孕和生育
+
+    def update_characters_age(self):
+        """
+        更新角色的年龄，如果当前日期是角色的生日，则年龄加1。
+        """
+        for character in self.characters:
+            if self.current_date.month == character.birth_date.month and self.current_date.day == character.birth_date.day:
+                character.age += 1
+        self.populate_character_list()
+        if self.current_character:
+            # 找到当前选中角色的QTreeWidgetItem
+            for i in range(self.character_list.topLevelItemCount()):
+                family_item = self.character_list.topLevelItem(i)
+                for j in range(family_item.childCount()):
+                    character_item = family_item.child(j)
+                    if character_item.data(0, 1) == self.current_character:
+                        self.display_character_details(character_item)
+                        break
 
     def handle_marriage_proposals(self):
         """
@@ -141,7 +163,7 @@ class CharacterWidget(QWidget):
                 elif character.pregnancy_days > 0:
                     character.pregnancy_days += 1
                     if character.pregnancy_days >= 270:  # 怀孕270天后生育
-                        new_characters.append(generate_child_character(character.spouse, character))
+                        new_characters.append(generate_child_character(character.spouse, character, self.current_date))
                         character.pregnancy_days = 0
 
         for new_character in new_characters:
