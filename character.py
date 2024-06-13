@@ -51,11 +51,13 @@ class Character:
         self.health = INITIAL_HEALTH  # 初始化健康值
         self.dying_days_left = None  # 初始化濒死天数为None
         self.children = []  # 初始化子女列表
+        self.father = None  # 初始化父亲为None
+        self.mother = None  # 初始化母亲为None
 
     def __str__(self):
         spouse_name = self.spouse.name if self.spouse else "无"  # 获取配偶姓名
         generation_chinese = number_to_chinese(self.generation)  # 将世代转换为汉字表示
-        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nHealth: {self.health}%\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\nLast Birth Date: {self.last_birth_date}\nGeneration: {generation_chinese}\nFamily ID: {self.family.id}\nBirth Date: {self.birth_date.strftime('%Y-%m-%d')}"  # 返回角色的字符串表示
+        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nHealth: {self.health}%\nPregnancy Days: {self.pregnancy_days}\nLast Birth Date: {self.last_birth_date}\nGeneration: {generation_chinese}\nFamily ID: {self.family.id}\nBirth Date: {self.birth_date.strftime('%Y-%m-%d')}"  # 返回角色的字符串表示
 
 def generate_random_character():
     """
@@ -105,8 +107,12 @@ def generate_child_character(father, mother, current_date):
     family = mother.family  # 子角色加入母亲的家庭
     generation = father.generation + 1  # 子角色的世代比父亲的世代多1
     mother.last_birth_date = current_date  # 更新母亲的最近一次生产日期
-    child = Character(name, gender, age, abilities, current_date, generation, family)  # 返回生成的子角色对象
+    child = Character(name, gender, age, abilities, current_date, generation, family)  # 创建子角色对象
     
+    # 设置子女的父母
+    child.father = father
+    child.mother = mother
+
     # 将子女添加到父母的子女列表中
     father.children.append(child)
     mother.children.append(child)
