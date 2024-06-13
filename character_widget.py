@@ -2,7 +2,7 @@ import random
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton
 from PyQt6.QtCore import QTimer, Qt
 from datetime import datetime, timedelta
-from character import generate_random_character, generate_child_character, Character, GAME_START_DATE
+from character import generate_random_character, generate_child_character, Character, GAME_START_DATE, number_to_chinese
 from time_control import TimeControl
 
 class CharacterWidget(QWidget):
@@ -41,7 +41,7 @@ class CharacterWidget(QWidget):
 
         # 右侧角色列表
         self.character_list = QTreeWidget()  # 创建角色树部件
-        self.character_list.setHeaderLabel("家庭和角色")  # 设置表头标签
+        self.character_list.setHeaderLabel(f"家庭与角色 (总人数: {len(self.characters)})")  # 设置表头标签
         self.character_list.itemClicked.connect(self.display_character_details)  # 连接点击信号
         content_layout.addWidget(self.character_list)  # 将角色列表添加到内容布局
 
@@ -59,19 +59,27 @@ class CharacterWidget(QWidget):
 
     def populate_character_list(self):
         """
-        将角色按家庭分组显示在角色树中。
+        将角色按家庭分组显示在角色树中，并显示全局人数和各家庭人数。
         """
         self.character_list.clear()  # 清空角色树
         families = {}
         for character in self.characters:
             if character.family.id not in families:
-                families[character.family.id] = QTreeWidgetItem(self.character_list)
-                families[character.family.id].setText(0, f"Family {character.family.id}")  # 设置家庭名称
-                families[character.family.id].setExpanded(True)  # 默认展开家庭节点
-            character_item = QTreeWidgetItem(families[character.family.id])
-            gender_symbol = "♂" if character.gender == "Male" else "♀"
-            character_item.setText(0, f"{character.name} ( {gender_symbol} {character.age} )")
-            character_item.setData(0, 1, character)
+                families[character.family.id] = []
+            families[character.family.id].append(character)
+
+        for family_id, members in families.items():
+            family_item = QTreeWidgetItem(self.character_list)
+            family_item.setText(0, f"Family {family_id} (人数: {len(members)})")  # 设置家庭名称和人数
+            family_item.setExpanded(True)  # 默认展开家庭节点
+            for character in members:
+                character_item = QTreeWidgetItem(family_item)
+                gender_symbol = "♂" if character.gender == "Male" else "♀"
+                generation_chinese = number_to_chinese(character.generation)  # 将世代转换为汉字表示
+                character_item.setText(0, f"{character.name} ( {gender_symbol} {character.age} {generation_chinese} )")
+                character_item.setData(0, 1, character)
+        
+        self.character_list.setHeaderLabel(f"家庭与角色 (总人数: {len(self.characters)})")  # 更新总人数显示
 
     def display_character_details(self, item):
         """

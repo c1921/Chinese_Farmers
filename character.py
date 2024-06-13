@@ -2,6 +2,7 @@ import random
 from datetime import datetime, timedelta
 from id_generator import UniqueIDGenerator
 import names
+from utils import number_to_chinese
 
 character_id_generator = UniqueIDGenerator()
 family_id_generator = UniqueIDGenerator()
@@ -33,7 +34,7 @@ class Character:
     """
     表示一个角色的类，包含唯一ID、姓名、性别、年龄、能力值、配偶和怀孕天数。
     """
-    def __init__(self, name, gender, age, abilities, birth_date, family=None):
+    def __init__(self, name, gender, age, abilities, birth_date, generation, family=None):
         self.id = character_id_generator.generate_id()  # 生成唯一ID
         self.name = name  # 设置角色姓名
         self.gender = gender  # 设置角色性别
@@ -42,13 +43,15 @@ class Character:
         self.spouse = None  # 初始化配偶为None
         self.pregnancy_days = 0  # 初始化怀孕天数为0
         self.last_birth_date = None  # 初始化最近一次生产日期为None
+        self.generation = generation  # 设置角色的世代
         self.family = family if family else Family()  # 如果没有传入家庭则创建一个新家庭
         self.family.add_member(self)  # 将角色添加到家庭
         self.birth_date = birth_date  # 设置角色的生日
 
     def __str__(self):
         spouse_name = self.spouse.name if self.spouse else "无"  # 获取配偶姓名
-        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\nLast Birth Date: {self.last_birth_date}\nFamily ID: {self.family.id}\nBirth Date: {self.birth_date.strftime('%Y-%m-%d')}"  # 返回角色的字符串表示
+        generation_chinese = number_to_chinese(self.generation)  # 将世代转换为汉字表示
+        return f"ID: {self.id}\nName: {self.name}\nGender: {self.gender}\nAge: {self.age}\nAbilities: {self.abilities}\nSpouse: {spouse_name}\nPregnancy Days: {self.pregnancy_days}\nLast Birth Date: {self.last_birth_date}\nGeneration: {generation_chinese}\nFamily ID: {self.family.id}\nBirth Date: {self.birth_date.strftime('%Y-%m-%d')}"  # 返回角色的字符串表示
 
 def generate_random_character():
     """
@@ -69,7 +72,8 @@ def generate_random_character():
         "dexterity": random.randint(1, 100),  # 随机生成灵巧值
         "charisma": random.randint(1, 100)  # 随机生成魅力值
     }
-    return Character(name, gender, age, abilities, birth_date)  # 返回生成的角色对象
+    generation = 1  # 初始角色的世代为1
+    return Character(name, gender, age, abilities, birth_date, generation)  # 返回生成的角色对象
 
 def generate_child_character(father, mother, current_date):
     """
@@ -95,5 +99,6 @@ def generate_child_character(father, mother, current_date):
         "charisma": (father.abilities["charisma"] + mother.abilities["charisma"]) // 2  # 计算魅力值的平均数
     }
     family = mother.family  # 子角色加入母亲的家庭
+    generation = father.generation + 1  # 子角色的世代比父亲的世代多1
     mother.last_birth_date = current_date  # 更新母亲的最近一次生产日期
-    return Character(name, gender, age, abilities, current_date, family)  # 返回生成的子角色对象
+    return Character(name, gender, age, abilities, current_date, generation, family)  # 返回生成的子角色对象
