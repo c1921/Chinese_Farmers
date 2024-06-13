@@ -23,19 +23,19 @@ class TimeControl:
         # 时间控制按钮
         self.speed_buttons = QButtonGroup(self.main_window)
 
-        self.slow_button = QPushButton("1000 ms/day")
+        self.slow_button = QPushButton("×1")
         self.speed_buttons.addButton(self.slow_button)
         self.top_layout.addWidget(self.slow_button)
 
-        self.medium_button = QPushButton("500 ms/day")
+        self.medium_button = QPushButton("×2")
         self.speed_buttons.addButton(self.medium_button)
         self.top_layout.addWidget(self.medium_button)
 
-        self.fast_button = QPushButton("100 ms/day")
+        self.fast_button = QPushButton("×10")
         self.speed_buttons.addButton(self.fast_button)
         self.top_layout.addWidget(self.fast_button)
 
-        self.very_fast_button = QPushButton("10 ms/day")
+        self.very_fast_button = QPushButton("×100")
         self.speed_buttons.addButton(self.very_fast_button)
         self.top_layout.addWidget(self.very_fast_button)
 

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from id_generator import UniqueIDGenerator
 import names
 from utils import number_to_chinese
+from config import INITIAL_HEALTH, HEALTH_DECAY_RATE
 
 character_id_generator = UniqueIDGenerator()
 family_id_generator = UniqueIDGenerator()
@@ -47,7 +48,7 @@ class Character:
         self.family = family if family else Family()  # 如果没有传入家庭则创建一个新家庭
         self.family.add_member(self)  # 将角色添加到家庭
         self.birth_date = birth_date  # 设置角色的生日
-        self.health = 100.0  # 初始化健康值为100%
+        self.health = INITIAL_HEALTH  # 初始化健康值
         self.dying_days_left = None  # 初始化濒死天数为None
 
     def __str__(self):
@@ -114,6 +115,5 @@ def update_health(character):
     """
     if character.age > 30:
         age_diff = character.age - 30
-        character.health -= age_diff ** 2 * 0.05  # 将0.05改为0.01以减缓健康值下降速度
+        character.health -= age_diff ** 2 * HEALTH_DECAY_RATE
         # 移除对健康值下限的限制
-

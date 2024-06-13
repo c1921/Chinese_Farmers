@@ -1,0 +1,26 @@
+# 游戏配置文件
+
+# 角色相关配置
+INITIAL_CHARACTER_COUNT: int = 20  # 初始生成角色数量
+INITIAL_HEALTH = 100.0 # 初始健康值
+HEALTH_DECAY_RATE = 0.05  # 健康值下降速度，默认值
+MARRIAGE_PROBABILITY = 0.05  # 婚姻申请概率
+MARRIAGE_ACCEPTANCE_PROBABILITY = 0.5  # 婚姻申请接受概率
+PREGNANCY_PROBABILITY = 0.1  # 怀孕概率
+PREGNANCY_DURATION = 270  # 怀孕天数
+POST_BIRTH_PREGNANCY_DELAY = 90  # 产后不可怀孕天数
+DEATH_PROBABILITY_COEFFICIENT = 0.0005  # 死亡概率系数
+
+# 时间相关配置
+GAME_START_YEAR = 1840
+GAME_START_MONTH = 1
+GAME_START_DAY = 1
+TIMER_INTERVALS = {
+    '1': 1000,
+    '2': 500,
+    '3': 100,
+    '4': 10
+}
+
+# 其他配置
+LOGGING_ENABLED = True  # 是否启用日志记录
