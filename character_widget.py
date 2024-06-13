@@ -1,9 +1,10 @@
 import random
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton, QTextEdit
 from PyQt6.QtCore import QTimer, Qt
 from datetime import datetime, timedelta
-from character import generate_random_character, generate_child_character, Character, GAME_START_DATE, number_to_chinese
+from character import generate_random_character, generate_child_character, Character, GAME_START_DATE, update_health
 from time_control import TimeControl
+from utils import number_to_chinese
 
 class CharacterWidget(QWidget):
     def __init__(self, characters):
@@ -56,6 +57,21 @@ class CharacterWidget(QWidget):
         self.timer.start(self.timer_interval)  # 根据初始时间间隔启动定时器
 
         self.current_character = None  # 当前选中的角色
+
+        # 日志显示
+        self.log_text_edit = QTextEdit()  # 创建日志文本编辑器
+        self.log_text_edit.setReadOnly(True)  # 设置为只读
+        main_layout.addWidget(self.log_text_edit)  # 将日志文本编辑器添加到主布局
+
+    def log_event(self, content):
+        """
+        记录事件日志。
+        
+        参数：
+        content (str): 日志内容。
+        """
+        log_entry = f"{self.current_date.strftime('%Y-%m-%d')}: {content}"
+        self.log_text_edit.append(log_entry)  # 在日志文本编辑器中追加日志条目
 
     def populate_character_list(self):
         """
@@ -118,6 +134,7 @@ class CharacterWidget(QWidget):
         self.update_characters_age()  # 更新角色年龄
         self.handle_marriage_proposals()  # 处理角色的婚姻申请
         self.handle_pregnancy()  # 处理角色的怀孕和生育
+        self.handle_dying_characters()  # 处理濒死角色的死亡
 
     def update_characters_age(self):
         """
@@ -126,6 +143,10 @@ class CharacterWidget(QWidget):
         for character in self.characters:
             if self.current_date.month == character.birth_date.month and self.current_date.day == character.birth_date.day:
                 character.age += 1
+                update_health(character)  # 更新角色健康值
+                death_probability = (100 - character.health) * character.age * 0.0005
+                if random.random() < death_probability / 100:
+                    character.dying_days_left = random.randint(1, 365)  # 随机设置濒死天数
         self.populate_character_list()
         if self.current_character:
             # 找到当前选中角色的QTreeWidgetItem
@@ -157,6 +178,7 @@ class CharacterWidget(QWidget):
                             else:
                                 chosen_spouse.family = character.family
                                 chosen_spouse.family.add_member(chosen_spouse)
+                            self.log_event(f"{character.name} 和 {chosen_spouse.name} 结婚了。")  # 记录结婚事件
         self.populate_character_list()
 
     def handle_pregnancy(self):
@@ -171,12 +193,30 @@ class CharacterWidget(QWidget):
                 elif character.pregnancy_days > 0:
                     character.pregnancy_days += 1
                     if character.pregnancy_days >= 270:  # 怀孕270天后生育
-                        new_characters.append(generate_child_character(character.spouse, character, self.current_date))
+                        new_character = generate_child_character(character.spouse, character, self.current_date)
+                        new_characters.append(new_character)
+                        self.log_event(f"{character.name} 和 {character.spouse.name} 生育了一个孩子：{new_character.name}。")  # 记录生育事件
                         character.pregnancy_days = 0
 
         for new_character in new_characters:
             self.characters.append(new_character)
         self.populate_character_list()
+
+    def handle_dying_characters(self):
+        """
+        处理濒死阶段的角色，检查是否死亡。
+        """
+        for character in self.characters:
+            if character.dying_days_left is not None:
+                character.dying_days_left -= 1
+                if character.dying_days_left <= 0:
+                    self.log_event(f"{character.name} 在 {self.current_date.strftime('%Y-%m-%d')} 死亡，享年 {character.age} 岁。")  # 记录死亡事件，显示年龄
+                    self.characters.remove(character)
+                    character.family.members.remove(character)
+                    self.populate_character_list()
+                    if self.current_character == character:
+                        self.current_character = None
+                        self.detail_label.setText("选择一个角色查看详细信息")
 
     def set_timer_interval(self, interval):
         """
