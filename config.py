@@ -17,9 +17,9 @@ GAME_START_MONTH = 1
 GAME_START_DAY = 1
 TIMER_INTERVALS = {
     '1': 1000,
-    '2': 500,
-    '3': 100,
-    '4': 10
+    '2': 100,
+    '3': 10,
+    '4': 5
 }
 
 # 其他配置
