@@ -1,37 +1,77 @@
-from PyQt6.QtWidgets import QVBoxLayout, QLabel, QPushButton
+from PyQt6.QtWidgets import QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
 
-class CharacterDetails:
+class CharacterDetails(QWidget):
     def __init__(self):
-        self.layout = QVBoxLayout()
+        super().__init__()
+
+        # 创建主布局和滚动区域
+        self.layout = QVBoxLayout(self)
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.layout.addWidget(self.scroll_area)
+
+        # 创建容器小部件和布局
+        self.container_widget = QWidget()
+        self.container_layout = QVBoxLayout(self.container_widget)
+
+        # 设置滚动区域的窗口小部件
+        self.scroll_area.setWidget(self.container_widget)
+
+        # 详细信息标签
         self.detail_label = QLabel("选择一个角色查看详细信息")
-        self.layout.addWidget(self.detail_label)
+        self.container_layout.addWidget(self.detail_label)
+
+        # 能力标签
+        self.strength_label = QLabel()
+        self.intelligence_label = QLabel()
+        self.dexterity_label = QLabel()
+        self.charisma_label = QLabel()
+        self.container_layout.addWidget(self.strength_label)
+        self.container_layout.addWidget(self.intelligence_label)
+        self.container_layout.addWidget(self.dexterity_label)
+        self.container_layout.addWidget(self.charisma_label)
 
         # 父母列表标签和布局
         self.parents_label = QLabel("父母:")
-        self.layout.addWidget(self.parents_label)
+        self.container_layout.addWidget(self.parents_label)
         self.parents_buttons_layout = QVBoxLayout()
-        self.layout.addLayout(self.parents_buttons_layout)
+        self.container_layout.addLayout(self.parents_buttons_layout)
 
         # 配偶列表标签和布局
         self.spouse_label = QLabel("配偶:")
-        self.layout.addWidget(self.spouse_label)
+        self.container_layout.addWidget(self.spouse_label)
         self.spouse_buttons_layout = QVBoxLayout()
-        self.layout.addLayout(self.spouse_buttons_layout)
+        self.container_layout.addLayout(self.spouse_buttons_layout)
 
         # 子女列表标签和布局
         self.children_label = QLabel("子女:")
-        self.layout.addWidget(self.children_label)
+        self.container_layout.addWidget(self.children_label)
         self.children_buttons_layout = QVBoxLayout()
-        self.layout.addLayout(self.children_buttons_layout)
+        self.container_layout.addLayout(self.children_buttons_layout)
 
         # 兄弟姐妹列表标签和布局
         self.siblings_label = QLabel("兄弟姐妹:")
-        self.layout.addWidget(self.siblings_label)
+        self.container_layout.addWidget(self.siblings_label)
         self.siblings_buttons_layout = QVBoxLayout()
-        self.layout.addLayout(self.siblings_buttons_layout)
+        self.container_layout.addLayout(self.siblings_buttons_layout)
 
     def display_character_details(self, character):
-        self.detail_label.setText(str(character))
+        self.detail_label.setText(f"ID: {character.id}\n"
+                                  f"Name: {character.name}\n"
+                                  f"Gender: {character.gender}\n"
+                                  f"Age: {character.age}\n"
+                                  f"Health: {character.health}%\n"
+                                  f"Pregnancy Days: {character.pregnancy_days}\n"
+                                  f"Last Birth Date: {character.last_birth_date}\n"
+                                  f"Generation: {character.generation}\n"
+                                  f"Family ID: {character.family.id}\n"
+                                  f"Birth Date: {character.birth_date}\n")
+        
+        # 更新能力值标签
+        self.strength_label.setText(f"Strength: {character.abilities['strength']}")
+        self.intelligence_label.setText(f"Intelligence: {character.abilities['intelligence']}")
+        self.dexterity_label.setText(f"Dexterity: {character.abilities['dexterity']}")
+        self.charisma_label.setText(f"Charisma: {character.abilities['charisma']}")
         
         # 更新父母信息
         self.update_parents_buttons(character)

@@ -1,5 +1,5 @@
 import random
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QScrollArea
 from PyQt6.QtCore import QTimer, Qt
 from datetime import datetime, timedelta
 from character import Character, GAME_START_DATE, update_health, generate_child_character
@@ -27,11 +27,21 @@ class CharacterWidget(QWidget):
         content_layout = QHBoxLayout()
         main_layout.addLayout(content_layout)
 
+        # 创建并添加角色详细信息区域
         self.character_details = CharacterDetails()
-        content_layout.addLayout(self.character_details.layout)
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.character_details)
+        scroll_area.setMaximumWidth(300)  # 设置最大宽度
+        scroll_area.setStyleSheet("border: none;")  # 移除边框
+        content_layout.addWidget(scroll_area)
 
+        # 创建并添加角色列表
         self.character_list = CharacterList(self.characters, self.character_details.display_character_details)
-        content_layout.addWidget(self.character_list.tree)
+        character_list_scroll_area = QScrollArea()
+        character_list_scroll_area.setWidgetResizable(True)
+        character_list_scroll_area.setWidget(self.character_list.tree)
+        content_layout.addWidget(character_list_scroll_area)
 
         self.event_logger = EventLogger()
         main_layout.addWidget(self.event_logger.text_edit)
@@ -40,7 +50,7 @@ class CharacterWidget(QWidget):
         self.populate_character_list()
         self.time_control.update_date_label(self.current_date)
 
-        self.setWindowTitle("随机角色")
+        self.setWindowTitle("Chinese Farmers")  # 设置窗口标题
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_time)
