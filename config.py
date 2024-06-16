@@ -6,7 +6,7 @@ INITIAL_HEALTH = 100.0 # 初始健康值
 HEALTH_DECAY_RATE = 0.05  # 健康值下降速度，默认值
 MARRIAGE_PROBABILITY = 0.05  # 婚姻申请概率
 MARRIAGE_ACCEPTANCE_PROBABILITY = 0.5  # 婚姻申请接受概率
-PREGNANCY_PROBABILITY = 0.1  # 怀孕概率
+PREGNANCY_PROBABILITY = 0.001  # 怀孕概率
 PREGNANCY_DURATION = 270  # 怀孕天数
 POST_BIRTH_PREGNANCY_DELAY = 90  # 产后不可怀孕天数
 DEATH_PROBABILITY_COEFFICIENT = 0.0005  # 死亡概率系数
@@ -17,9 +17,9 @@ GAME_START_MONTH = 1
 GAME_START_DAY = 1
 TIMER_INTERVALS = {
     '1': 1000,
-    '2': 100,
-    '3': 10,
-    '4': 5
+    '2': 10,
+    '3': 5,
+    '4': 1
 }
 
 # 其他配置

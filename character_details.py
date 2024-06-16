@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
+from family_window import FamilyWindow  # 导入家庭成员窗口
 
 class CharacterDetails(QWidget):
     def __init__(self):
@@ -55,7 +56,15 @@ class CharacterDetails(QWidget):
         self.siblings_buttons_layout = QVBoxLayout()
         self.container_layout.addLayout(self.siblings_buttons_layout)
 
+        # 家庭成员按钮
+        self.family_button = QPushButton("查看家庭成员")
+        self.family_button.clicked.connect(self.show_family_members)
+        self.container_layout.addWidget(self.family_button)
+
+        self.current_character = None  # 用于存储当前角色
+
     def display_character_details(self, character):
+        self.current_character = character  # 更新当前角色
         self.detail_label.setText(f"ID: {character.id}\n"
                                   f"Name: {character.name}\n"
                                   f"Gender: {character.gender}\n"
@@ -84,6 +93,11 @@ class CharacterDetails(QWidget):
 
         # 更新兄弟姐妹信息
         self.update_siblings_buttons(character)
+
+    def show_family_members(self):
+        if self.current_character:
+            family_window = FamilyWindow(self.current_character.family)
+            family_window.exec()
 
     def update_parents_buttons(self, character):
         # 清空父母按钮布局
