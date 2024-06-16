@@ -140,6 +140,7 @@ class CharacterWidget(QWidget):
                 character.dying_days_left -= 1
                 if character.dying_days_left <= 0:
                     self.log_event(f"{character.name} 在 {self.current_date.strftime('%Y-%m-%d')} 死亡，享年 {character.age} 岁。")
+                    character.is_deceased = True  # 更新死亡属性
                     self.characters.remove(character)
                     character.family.members.remove(character)
                     self.populate_character_list()

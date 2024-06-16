@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsTextItem, QGraphicsLineItem, QGraphicsRectItem
-from PyQt6.QtGui import QPen, QBrush, QColor
+from PyQt6.QtGui import QPen, QBrush, QColor, QFont
 from PyQt6.QtCore import Qt
 
 class FamilyWindow(QDialog):
@@ -48,6 +48,8 @@ class GenealogyTree(QGraphicsView):
     def initUI(self):
         # Calculate widths and node positions
         root_node = self.get_root_node()
+        if root_node is None:
+            return  # 如果没有符合条件的根节点，不显示树
         self.calculate_widths(root_node)
         self.calculate_positions(root_node, 400, 50)
         
@@ -55,12 +57,21 @@ class GenealogyTree(QGraphicsView):
         nodes = {}
         for member, pos in self.positions.items():
             node = QGraphicsRectItem(0, 0, 80, 40)
-            node.setBrush(QBrush(QColor(173, 216, 230)))  # Set background color
+            if member.gender == "Male":
+                node.setBrush(QBrush(QColor(173, 216, 230)))  # Set background color for male
+            else:
+                node.setBrush(QBrush(QColor(255, 182, 193)))  # Set background color for female
             node.setPos(*pos)
             self.scene.addItem(node)
             
             text = QGraphicsTextItem(f"{member.name} ( {'♂' if member.gender == 'Male' else '♀'} {member.age} )")
-            text.setDefaultTextColor(Qt.GlobalColor.black)
+            if member.is_deceased:
+                font = QFont()
+                font.setItalic(True)
+                text.setDefaultTextColor(Qt.GlobalColor.gray)
+                text.setFont(font)
+            else:
+                text.setDefaultTextColor(Qt.GlobalColor.black)
             text.setPos(pos[0] + 10, pos[1] + 10)
             self.scene.addItem(text)
             nodes[member] = node
@@ -72,16 +83,11 @@ class GenealogyTree(QGraphicsView):
                     self.add_edge(nodes[member], nodes[child])
 
     def get_root_node(self):
-        # 优先选择家族中世代第一的男性角色
+        # 选择家族中世代第一的男性角色作为根节点
         try:
             root_node = next(member for member in self.all_members if member.generation == 1 and member.gender == "Male")
         except StopIteration:
-            # 如果没有找到，选择世代第一的角色
-            try:
-                root_node = next(member for member in self.all_members if member.generation == 1)
-            except StopIteration:
-                # 如果仍然没有找到，选择家族中的第一个角色
-                root_node = self.all_members[0]
+            root_node = None  # 如果没有找到符合条件的根节点，返回None
         return root_node
 
     def calculate_widths(self, member):

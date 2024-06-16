@@ -54,6 +54,7 @@ class Character:
         self.father = None  # 初始化父亲为None
         self.mother = None  # 初始化母亲为None
         self.fertility = random.uniform(0, 1)
+        self.is_deceased = False  # 添加死亡属性
 
     def __str__(self):
         spouse_name = self.spouse.name if self.spouse else "无"  # 获取配偶姓名
