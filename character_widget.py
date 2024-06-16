@@ -86,26 +86,41 @@ class CharacterWidget(QWidget):
         for character in self.characters:
             if character.spouse is None and character.age >= 16:
                 if random.random() < MARRIAGE_PROBABILITY:
-                    potential_spouses = [c for c in self.characters if c.gender != character.gender and c.spouse is None and c.age >= 16]
+                    potential_spouses = [
+                        c for c in self.characters 
+                        if c.gender != character.gender and c.spouse is None and c.age >= 16
+                    ]
                     if potential_spouses:
                         chosen_spouse = random.choice(potential_spouses)
-                        if random.random() < MARRIAGE_ACCEPTANCE_PROBABILITY:
-                            character.spouse = chosen_spouse
-                            chosen_spouse.spouse = character
-                            if character.gender == "Female":
-                                character.family = chosen_spouse.family
-                                character.family.add_member(character)
-                            else:
-                                chosen_spouse.family = character.family
-                                chosen_spouse.family.add_member(chosen_spouse)
-                            self.log_event(f"{character.name} 和 {chosen_spouse.name} 结婚了。")
+                        if self.can_marry(character, chosen_spouse):
+                            if random.random() < MARRIAGE_ACCEPTANCE_PROBABILITY:
+                                character.spouse = chosen_spouse
+                                chosen_spouse.spouse = character
+                                if character.gender == "Female":
+                                    character.family = chosen_spouse.family
+                                    character.family.add_member(character)
+                                else:
+                                    chosen_spouse.family = character.family
+                                    chosen_spouse.family.add_member(chosen_spouse)
+                                self.log_event(f"{character.name} 和 {chosen_spouse.name} 结婚了。")
         self.populate_character_list()
+
+    def can_marry(self, character, chosen_spouse):
+        """
+        检查角色是否可以结婚，避免近亲结婚：
+        如果对方与自己在同一家庭，并且与对方的世代的差值小于5，则不允许。
+        """
+        if character.family == chosen_spouse.family:
+            if abs(character.generation - chosen_spouse.generation) < 5:
+                return False
+        return True
 
     def handle_pregnancy(self):
         new_characters = []
         for character in self.characters:
             if character.spouse and character.gender == "Female" and 16 <= character.age < 40:
-                if character.pregnancy_days == 0 and (character.last_birth_date is None or (self.current_date - character.last_birth_date).days >= POST_BIRTH_PREGNANCY_DELAY) and random.random() < PREGNANCY_PROBABILITY:
+                fertility_probability = (character.fertility + character.spouse.fertility) / 2 * PREGNANCY_PROBABILITY
+                if character.pregnancy_days == 0 and (character.last_birth_date is None or (self.current_date - character.last_birth_date).days >= POST_BIRTH_PREGNANCY_DELAY) and random.random() < fertility_probability:
                     character.pregnancy_days = 1
                 elif character.pregnancy_days > 0:
                     character.pregnancy_days += 1

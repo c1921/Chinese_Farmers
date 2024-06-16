@@ -1,7 +1,7 @@
 # 游戏配置文件
 
 # 角色相关配置
-INITIAL_CHARACTER_COUNT: int = 20  # 初始生成角色数量
+INITIAL_CHARACTER_COUNT: int = 50  # 初始生成角色数量
 INITIAL_HEALTH = 100.0 # 初始健康值
 HEALTH_DECAY_RATE = 0.05  # 健康值下降速度，默认值
 MARRIAGE_PROBABILITY = 0.05  # 婚姻申请概率

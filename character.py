@@ -53,6 +53,7 @@ class Character:
         self.children = []  # 初始化子女列表
         self.father = None  # 初始化父亲为None
         self.mother = None  # 初始化母亲为None
+        self.fertility = random.uniform(0, 1)
 
     def __str__(self):
         spouse_name = self.spouse.name if self.spouse else "无"  # 获取配偶姓名
@@ -70,7 +71,7 @@ def generate_random_character():
     first_name = names.get_first_name(gender.lower())  # 根据性别生成名字
     last_name = names.get_last_name()  # 生成姓氏
     name = f"{last_name} {first_name}"  # 合并姓名，姓在前，名在后
-    age = random.randint(18, 60)  # 随机生成年龄
+    age = random.randint(16, 25)  # 随机生成年龄
     birth_date = GAME_START_DATE - timedelta(days=age*365 + random.randint(0, 364))  # 随机生成出生日期
     abilities = {
         "strength": random.randint(1, 100),  # 随机生成力量值
