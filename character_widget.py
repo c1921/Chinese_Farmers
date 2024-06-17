@@ -73,6 +73,8 @@ class CharacterWidget(QWidget):
 
     def update_characters_age(self):
         for character in self.characters:
+            if character.is_deceased:
+                continue  # 跳过已死亡的角色
             if self.current_date.month == character.birth_date.month and self.current_date.day == character.birth_date.day:
                 character.age += 1
                 update_health(character)
@@ -84,25 +86,26 @@ class CharacterWidget(QWidget):
 
     def handle_marriage_proposals(self):
         for character in self.characters:
-            if character.spouse is None and character.age >= 16:
-                if random.random() < MARRIAGE_PROBABILITY:
-                    potential_spouses = [
-                        c for c in self.characters 
-                        if c.gender != character.gender and c.spouse is None and c.age >= 16
-                    ]
-                    if potential_spouses:
-                        chosen_spouse = random.choice(potential_spouses)
-                        if self.can_marry(character, chosen_spouse):
-                            if random.random() < MARRIAGE_ACCEPTANCE_PROBABILITY:
-                                character.spouse = chosen_spouse
-                                chosen_spouse.spouse = character
-                                if character.gender == "Female":
-                                    character.family = chosen_spouse.family
-                                    character.family.add_member(character)
-                                else:
-                                    chosen_spouse.family = character.family
-                                    chosen_spouse.family.add_member(chosen_spouse)
-                                self.log_event(f"{character.name} 和 {chosen_spouse.name} 结婚了。")
+            if character.is_deceased or character.spouse is not None or character.age < 16:
+                continue  # 跳过已死亡、有配偶或年龄小于16岁的角色
+            if random.random() < MARRIAGE_PROBABILITY:
+                potential_spouses = [
+                    c for c in self.characters 
+                    if c.gender != character.gender and c.spouse is None and c.age >= 16 and not c.is_deceased
+                ]
+                if potential_spouses:
+                    chosen_spouse = random.choice(potential_spouses)
+                    if self.can_marry(character, chosen_spouse):
+                        if random.random() < MARRIAGE_ACCEPTANCE_PROBABILITY:
+                            character.spouse = chosen_spouse
+                            chosen_spouse.spouse = character
+                            if character.gender == "Female":
+                                character.family = chosen_spouse.family
+                                character.family.add_member(character)
+                            else:
+                                chosen_spouse.family = character.family
+                                chosen_spouse.family.add_member(chosen_spouse)
+                            self.log_event(f"{character.name} 和 {chosen_spouse.name} 结婚了。")
         self.populate_character_list()
 
     def can_marry(self, character, chosen_spouse):
@@ -118,17 +121,18 @@ class CharacterWidget(QWidget):
     def handle_pregnancy(self):
         new_characters = []
         for character in self.characters:
-            if character.spouse and character.gender == "Female" and 16 <= character.age < 40:
-                fertility_probability = (character.fertility + character.spouse.fertility) / 2 * PREGNANCY_PROBABILITY
-                if character.pregnancy_days == 0 and (character.last_birth_date is None or (self.current_date - character.last_birth_date).days >= POST_BIRTH_PREGNANCY_DELAY) and random.random() < fertility_probability:
-                    character.pregnancy_days = 1
-                elif character.pregnancy_days > 0:
-                    character.pregnancy_days += 1
-                    if character.pregnancy_days >= PREGNANCY_DURATION:
-                        new_character = generate_child_character(character.spouse, character, self.current_date)
-                        new_characters.append(new_character)
-                        self.log_event(f"{character.name} 和 {character.spouse.name} 生育了一个孩子：{new_character.name}。")
-                        character.pregnancy_days = 0
+            if character.is_deceased or character.spouse is None or character.gender != "Female" or character.age < 16 or character.age >= 40:
+                continue  # 跳过已死亡、无配偶、非女性或不在生育年龄范围内的角色
+            fertility_probability = (character.fertility + character.spouse.fertility) / 2 * PREGNANCY_PROBABILITY
+            if character.pregnancy_days == 0 and (character.last_birth_date is None or (self.current_date - character.last_birth_date).days >= POST_BIRTH_PREGNANCY_DELAY) and random.random() < fertility_probability:
+                character.pregnancy_days = 1
+            elif character.pregnancy_days > 0:
+                character.pregnancy_days += 1
+                if character.pregnancy_days >= PREGNANCY_DURATION:
+                    new_character = generate_child_character(character.spouse, character, self.current_date)
+                    new_characters.append(new_character)
+                    self.log_event(f"{character.name} 和 {character.spouse.name} 生育了一个孩子：{new_character.name}。")
+                    character.pregnancy_days = 0
 
         for new_character in new_characters:
             self.characters.append(new_character)
@@ -141,10 +145,10 @@ class CharacterWidget(QWidget):
                 if character.dying_days_left <= 0:
                     self.log_event(f"{character.name} 在 {self.current_date.strftime('%Y-%m-%d')} 死亡，享年 {character.age} 岁。")
                     character.is_deceased = True  # 更新死亡属性
-                    self.characters.remove(character)
-                    character.family.members.remove(character)
-                    self.populate_character_list()
-                    self.character_list.update_current_character(self.character_details)
+                    character.death_date = self.current_date  # 设置死亡日期
+                    self.populate_character_list()  # 更新角色列表显示
+                    self.character_list.update_current_character(self.character_details)  # 更新当前角色详情显示
+                    character.dying_days_left = None  # 清除濒死天数
 
     def set_timer_interval(self, interval):
         self.timer_interval = interval
