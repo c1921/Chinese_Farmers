@@ -70,6 +70,8 @@ class CharacterWidget(QWidget):
         self.handle_marriage_proposals()
         self.handle_pregnancy()
         self.handle_dying_characters()
+        if self.character_details.current_character is not None:
+            self.character_details.display_character_details(self.character_details.current_character)  # 自动更新角色栏
 
     def update_characters_age(self):
         for character in self.characters:
