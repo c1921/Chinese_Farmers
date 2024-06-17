@@ -13,7 +13,7 @@ class FamilyWindow(QDialog):
         
         self.view = GenealogyTree(family)
         layout.addWidget(self.view)
-        
+
 class GenealogyTree(QGraphicsView):
     def __init__(self, family):
         super().__init__()
@@ -22,40 +22,27 @@ class GenealogyTree(QGraphicsView):
         self.family = family
         self.positions = {}
         self.widths = {}
-        self.all_members = self.get_all_family_members(family)  # 获取所有家庭成员
         self.initUI()
 
-    def get_all_family_members(self, family):
-        members = set(family.members)  # 包含当前家庭的所有成员
-        to_check = list(family.members)
-
-        # 获取所有的父母和孩子
-        while to_check:
-            member = to_check.pop()
-            if member.father and member.father not in members:
-                members.add(member.father)
-                to_check.append(member.father)
-            if member.mother and member.mother not in members:
-                members.add(member.mother)
-                to_check.append(member.mother)
-            for child in member.children:
-                if child not in members:
-                    members.add(child)
-                    to_check.append(child)
-
-        return list(members)
-
     def initUI(self):
-        # Calculate widths and node positions
+        # 确定根节点
         root_node = self.get_root_node()
         if root_node is None:
             return  # 如果没有符合条件的根节点，不显示树
+
+        # 获取所有符合条件的后代
+        descendants = self.get_descendants(root_node)
+
+        # 计算节点宽度和位置
         self.calculate_widths(root_node)
         self.calculate_positions(root_node, 400, 50)
-        
-        # Create nodes
+
+        # 创建节点
         nodes = {}
         for member, pos in self.positions.items():
+            if member not in descendants:
+                continue
+
             node = QGraphicsRectItem(0, 0, 80, 40)
             if member.gender == "Male":
                 node.setBrush(QBrush(QColor(173, 216, 230)))  # Set background color for male
@@ -63,35 +50,54 @@ class GenealogyTree(QGraphicsView):
                 node.setBrush(QBrush(QColor(255, 182, 193)))  # Set background color for female
             node.setPos(*pos)
             self.scene.addItem(node)
-            
+
             text = QGraphicsTextItem(f"{member.name} ( {'♂' if member.gender == 'Male' else '♀'} {member.age} )")
             if member.is_deceased:
                 font = QFont()
                 font.setItalic(True)
-                text.setDefaultTextColor(Qt.GlobalColor.gray)
                 text.setFont(font)
+                text.setDefaultTextColor(Qt.GlobalColor.gray)
             else:
                 text.setDefaultTextColor(Qt.GlobalColor.black)
             text.setPos(pos[0] + 10, pos[1] + 10)
             self.scene.addItem(text)
             nodes[member] = node
 
-        # Create edges
-        for member in self.all_members:
+        # 创建边
+        for member in descendants:
             for child in member.children:
-                if member in nodes and child in nodes:
+                if child in descendants and member in nodes and child in nodes:
                     self.add_edge(nodes[member], nodes[child])
 
     def get_root_node(self):
         # 选择家族中世代第一的男性角色作为根节点
         try:
-            root_node = next(member for member in self.all_members if member.generation == 1 and member.gender == "Male")
+            root_node = next(member for member in self.family.members if member.generation == 1 and member.gender == "Male")
         except StopIteration:
             root_node = None  # 如果没有找到符合条件的根节点，返回None
         return root_node
 
+    def get_descendants(self, root):
+        descendants = set()
+        to_check = [root]
+        
+        while to_check:
+            member = to_check.pop()
+            descendants.add(member)
+            if member.gender == "Female":
+                continue  # 排除女性后代的后代
+
+            for child in member.children:
+                if child not in descendants:
+                    to_check.append(child)
+                    
+        return descendants
+
     def calculate_widths(self, member):
-        if not member.children:
+        if member not in self.family.members:
+            return 0
+
+        if not member.children or (member.gender == "Female" and member.generation != 1):
             self.widths[member] = 80  # Width of one node
             return self.widths[member]
 
@@ -108,7 +114,7 @@ class GenealogyTree(QGraphicsView):
         return width
 
     def calculate_positions(self, member, x, y):
-        if not member.children:
+        if not member.children or (member.gender == "Female" and member.generation != 1):
             self.positions[member] = (x, y)
             return
 
