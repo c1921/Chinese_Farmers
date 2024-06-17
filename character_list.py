@@ -14,6 +14,8 @@ class CharacterList:
         self.tree.clear()
         families = {}
         for character in self.characters:
+            if character.is_deceased:  # 跳过已死亡角色
+                continue
             if character.family.id not in families:
                 families[character.family.id] = []
             families[character.family.id].append(character)

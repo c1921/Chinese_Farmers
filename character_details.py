@@ -1,6 +1,10 @@
 from PyQt6.QtWidgets import QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
 from family_window import FamilyWindow  # 导入家庭成员窗口
 
+def format_date(date):
+    """格式化日期，仅保留年月日"""
+    return date.strftime('%Y-%m-%d') if date else "N/A"
+
 class CharacterDetails(QWidget):
     def __init__(self):
         super().__init__()
@@ -65,23 +69,34 @@ class CharacterDetails(QWidget):
 
     def display_character_details(self, character):
         self.current_character = character  # 更新当前角色
-        self.detail_label.setText(f"ID: {character.id}\n"
-                                  f"Name: {character.name}\n"
-                                  f"Gender: {character.gender}\n"
-                                  f"Age: {character.age}\n"
-                                  f"Health: {character.health}%\n"
-                                  f"Pregnancy Days: {character.pregnancy_days}\n"
-                                  f"Last Birth Date: {character.last_birth_date}\n"
-                                  f"Generation: {character.generation}\n"
-                                  f"Family ID: {character.family.id}\n"
-                                  f"Birth Date: {character.birth_date}\n")
+        birth_date = format_date(character.birth_date)
+        last_birth_date = format_date(character.last_birth_date)
+
+        detail_text = (f"ID: {character.id}\n"
+                       f"Name: {character.name}\n"
+                       f"Gender: {character.gender}\n"
+                       f"Age: {character.age}\n"
+                       f"Health: {character.health}%\n"
+                       f"Generation: {character.generation}\n"
+                       f"Family ID: {character.family.id}\n"
+                       f"Birth Date: {birth_date}\n")
+
+        if character.gender == "Female":
+            detail_text += (f"Pregnancy Days: {character.pregnancy_days}\n"
+                            f"Last Birth Date: {last_birth_date}\n")
+
+        if character.is_deceased:
+            death_date = format_date(character.death_date)
+            detail_text += f"Death Date: {death_date}\n"
+        
+        self.detail_label.setText(detail_text)
         
         # 更新能力值标签
         self.strength_label.setText(f"Strength: {character.abilities['strength']}")
         self.intelligence_label.setText(f"Intelligence: {character.abilities['intelligence']}")
         self.dexterity_label.setText(f"Dexterity: {character.abilities['dexterity']}")
         self.charisma_label.setText(f"Charisma: {character.abilities['charisma']}")
-        
+
         # 更新父母信息
         self.update_parents_buttons(character)
 
