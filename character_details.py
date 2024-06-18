@@ -31,32 +31,41 @@ class CharacterDetails(QWidget):
         self.intelligence_label = QLabel()
         self.dexterity_label = QLabel()
         self.charisma_label = QLabel()
-        self.container_layout.addWidget(self.strength_label)
-        self.container_layout.addWidget(self.intelligence_label)
-        self.container_layout.addWidget(self.dexterity_label)
-        self.container_layout.addWidget(self.charisma_label)
+
+        # 设置固定高度和间距
+        for label in [self.strength_label, self.intelligence_label, self.dexterity_label, self.charisma_label]:
+            label.setFixedHeight(10)
+            self.container_layout.addWidget(label)
+            self.container_layout.addSpacing(0)
+
+        # 添加一个固定的空间隔开能力值和人物关系
+        self.container_layout.addSpacing(15)
 
         # 父母列表标签和布局
         self.parents_label = QLabel("父母:")
         self.container_layout.addWidget(self.parents_label)
+        self.container_layout.addSpacing(10)
         self.parents_buttons_layout = QVBoxLayout()
         self.container_layout.addLayout(self.parents_buttons_layout)
 
         # 配偶列表标签和布局
         self.spouse_label = QLabel("配偶:")
         self.container_layout.addWidget(self.spouse_label)
+        self.container_layout.addSpacing(10)
         self.spouse_buttons_layout = QVBoxLayout()
         self.container_layout.addLayout(self.spouse_buttons_layout)
 
         # 子女列表标签和布局
         self.children_label = QLabel("子女:")
         self.container_layout.addWidget(self.children_label)
+        self.container_layout.addSpacing(10)
         self.children_buttons_layout = QVBoxLayout()
         self.container_layout.addLayout(self.children_buttons_layout)
 
         # 兄弟姐妹列表标签和布局
         self.siblings_label = QLabel("兄弟姐妹:")
         self.container_layout.addWidget(self.siblings_label)
+        self.container_layout.addSpacing(10)
         self.siblings_buttons_layout = QVBoxLayout()
         self.container_layout.addLayout(self.siblings_buttons_layout)
 

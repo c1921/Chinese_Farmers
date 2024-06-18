@@ -18,33 +18,36 @@ class CharacterWidget(QWidget):
         self.timer_interval = TIMER_INTERVALS['1']
         self.timer_paused = False
 
-        main_layout = QVBoxLayout()
+        main_layout = QHBoxLayout()  # 使用 QHBoxLayout 代替 QVBoxLayout
         self.setLayout(main_layout)
 
-        self.time_control = TimeControl(self)
-        main_layout.addLayout(self.time_control.top_layout)
+        # 左侧布局
+        left_layout = QVBoxLayout()
+        main_layout.addLayout(left_layout)
 
-        content_layout = QHBoxLayout()
-        main_layout.addLayout(content_layout)
-
-        # 创建并添加角色详细信息区域
         self.character_details = CharacterDetails()
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(self.character_details)
         scroll_area.setMaximumWidth(300)  # 设置最大宽度
         scroll_area.setStyleSheet("border: none;")  # 移除边框
-        content_layout.addWidget(scroll_area)
+        left_layout.addWidget(scroll_area)
 
-        # 创建并添加角色列表
+        # 右侧布局
+        right_layout = QVBoxLayout()
+        main_layout.addLayout(right_layout)
+
+        self.time_control = TimeControl(self)
+        right_layout.addLayout(self.time_control.top_layout)
+
         self.character_list = CharacterList(self.characters, self.character_details.display_character_details)
         character_list_scroll_area = QScrollArea()
         character_list_scroll_area.setWidgetResizable(True)
         character_list_scroll_area.setWidget(self.character_list.tree)
-        content_layout.addWidget(character_list_scroll_area)
+        right_layout.addWidget(character_list_scroll_area)
 
         self.event_logger = EventLogger()
-        main_layout.addWidget(self.event_logger.text_edit)
+        right_layout.addWidget(self.event_logger.text_edit)
 
         setup_shortcuts(self)  # 设置快捷键
         self.populate_character_list()
